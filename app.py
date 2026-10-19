@@ -1,11 +1,13 @@
 import os
 import re
+import traceback
 from flask import Flask, render_template, request, jsonify
 from pypdf import PdfReader
 from docx import Document
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+# Allow up to 100 MB uploads
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
 EXCLUDED_PATTERNS = [
     r'\b(cricket|ipl|wicket|batsman|bcci|fifa|goal|messi|ronaldo|tennis|grand slam)\b',
@@ -41,17 +43,22 @@ MBA_CATEGORIES = {
 def extract_text_from_file(file_storage):
     filename = file_storage.filename.lower()
     text = ""
-    if filename.endswith('.pdf'):
-        reader = PdfReader(file_storage)
-        for page in reader.pages:
-            extracted = page.extract_text()
-            if extracted:
-                text += extracted + "\n"
-    elif filename.endswith('.docx'):
-        doc = Document(file_storage)
-        text = "\n".join([p.text for p in doc.paragraphs if p.text])
-    elif filename.endswith('.txt'):
-        text = file_storage.read().decode('utf-8', errors='ignore')
+    try:
+        if filename.endswith('.pdf'):
+            reader = PdfReader(file_storage)
+            # Limit to first 25 pages to avoid memory exhaustion on free tier
+            pages_to_read = min(len(reader.pages), 25)
+            for i in range(pages_to_read):
+                page_text = reader.pages[i].extract_text()
+                if page_text:
+                    text += page_text + "\n"
+        elif filename.endswith('.docx'):
+            doc = Document(file_storage)
+            text = "\n".join([p.text for p in doc.paragraphs if p.text])
+        elif filename.endswith('.txt'):
+            text = file_storage.read().decode('utf-8', errors='ignore')
+    except Exception as e:
+        print(f"Error extracting {filename}: {e}")
     return text
 
 def is_noise(paragraph):
@@ -67,7 +74,8 @@ def categorize_and_tag(paragraph):
     return 'General Strategy & Macro', 'Competitive Advantage'
 
 def process_corpus(text, source_name):
-    paragraphs = [p.strip() for p in text.split('\n\n') if len(p.strip()) > 100]
+    # Split paragraphs by double newline or multiple spaces
+    paragraphs = [p.strip() for p in re.split(r'\n\s*\n', text) if len(p.strip()) > 80]
     articles = []
 
     for p in paragraphs:
@@ -82,7 +90,7 @@ def process_corpus(text, source_name):
         bullets = sentences[1:4] if len(sentences) > 1 else [headline]
 
         articles.append({
-            'headline': headline,
+            'headline': headline[:160] + ('...' if len(headline) > 160 else ''),
             'bullets': bullets,
             'category': category,
             'concept_tag': tag,
@@ -96,29 +104,49 @@ def home():
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
-    files = request.files.getlist('files')
-    if not files or files[0].filename == '':
-        return jsonify({'error': 'No files provided'}), 400
+    try:
+        if 'files' not in request.files:
+            return jsonify({'status': 'error', 'error': 'No file field received'}), 400
 
-    if len(files) > 10:
-        return jsonify({'error': 'Maximum 10 files permitted per batch'}), 400
+        files = request.files.getlist('files')
+        if not files or files[0].filename == '':
+            return jsonify({'status': 'error', 'error': 'No files selected'}), 400
 
-    all_articles = []
-    processed_count = 0
+        if len(files) > 10:
+            return jsonify({'status': 'error', 'error': 'Maximum 10 files permitted per batch'}), 400
 
-    for file in files:
-        if file.filename:
-            raw_text = extract_text_from_file(file)
-            if raw_text.strip():
-                articles = process_corpus(raw_text, file.filename)
-                all_articles.extend(articles)
-                processed_count += 1
+        all_articles = []
+        processed_count = 0
 
-    return jsonify({
-        'status': 'success',
-        'files_processed': processed_count,
-        'articles': all_articles
-    })
+        for file in files:
+            if file and file.filename:
+                raw_text = extract_text_from_file(file)
+                if raw_text.strip():
+                    articles = process_corpus(raw_text, file.filename)
+                    all_articles.extend(articles)
+                    processed_count += 1
+
+        if not all_articles:
+            return jsonify({
+                'status': 'success',
+                'files_processed': processed_count,
+                'articles': [],
+                'message': 'No text could be extracted. Make sure the PDF contains selectable text (not scanned images).'
+            })
+
+        return jsonify({
+            'status': 'success',
+            'files_processed': processed_count,
+            'articles': all_articles[:50]  # Cap response to top 50 briefs for fast load
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'status': 'error', 'error': str(e)}), 500
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({'status': 'error', 'error': 'Total file size exceeds 100 MB limit.'}), 413
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
