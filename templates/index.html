@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ET Brief — MBA Business Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
+    </style>
+</head>
+<body class="bg-[#FBFBFD] text-slate-800 min-h-screen">
+    <header class="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-50 py-4 px-6">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-semibold tracking-tight text-slate-900">ET Brief</h1>
+                <p class="text-xs text-slate-500">Curated MBA Intelligence Server</p>
+            </div>
+            <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium">Server Online</span>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-6 space-y-6">
+        <section class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm text-center">
+            <h2 class="text-base font-semibold text-slate-900 mb-1">Batch Document Ingestion</h2>
+            <p class="text-xs text-slate-500 mb-4">Upload up to 10 editions (.pdf, .docx, .txt). Non-business news is automatically purged.</p>
+
+            <form id="uploadForm" class="space-y-4">
+                <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                <button type="submit" id="submitBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-5 py-2.5 rounded-xl transition shadow-sm">
+                    Process Documents on Server
+                </button>
+            </form>
+            <div id="loader" class="hidden text-xs text-blue-600 font-medium mt-3">Processing documents on server...</div>
+        </section>
+
+        <section id="resultsSection" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">Business Briefs</h3>
+                <span id="articleCount" class="text-xs text-slate-500"></span>
+            </div>
+            <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </section>
+    </main>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const loader = document.getElementById('loader');
+        const resultsSection = document.getElementById('resultsSection');
+        const cardsGrid = document.getElementById('cardsGrid');
+        const articleCount = document.getElementById('articleCount');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!fileInput.files.length) return alert('Please select at least 1 file.');
+            if (fileInput.files.length > 10) return alert('Maximum 10 files allowed.');
+
+            const formData = new FormData();
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('files', fileInput.files[i]);
+            }
+
+            loader.classList.remove('hidden');
+            cardsGrid.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/analyze', { method: 'POST', body: formData });
+                const data = await res.json();
+                loader.classList.add('hidden');
+
+                if (data.status === 'success') {
+                    resultsSection.classList.remove('hidden');
+                    articleCount.textContent = `${data.articles.length} brief(s) extracted from ${data.files_processed} publication(s)`;
+
+                    data.articles.forEach(art => {
+                        const card = document.createElement('div');
+                        card.className = "bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-3";
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start gap-2">
+                                <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full">${art.category}</span>
+                                <span class="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">${art.source}</span>
+                            </div>
+                            <h4 class="text-sm font-semibold text-slate-900 leading-snug">${art.headline}</h4>
+                            <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                                ${art.bullets.map(b => `<li>${b}</li>`).join('')}
+                            </ul>
+                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <span class="text-[10px] font-medium text-slate-500">Framework: <strong class="text-slate-700">${art.concept_tag}</strong></span>
+                            </div>
+                        `;
+                        cardsGrid.appendChild(card);
+                    });
+                } else {
+                    alert(data.error || 'Failed to process files');
+                }
+            } catch (err) {
+                loader.classList.add('hidden');
+                alert('Network or server error occurred.');
+            }
+        });
+    </script>
+</body>
+</html>
