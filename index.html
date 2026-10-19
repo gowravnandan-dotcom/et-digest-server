@@ -3,52 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ET Brief — Multi-Edition MBA Intelligence</title>
+  <title>ET Brief — MBA Executive Digest</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
   </style>
 </head>
-<body class="bg-[#FBFBFD] text-slate-800 min-h-screen">
-  <!-- Top Navigation -->
-  <header class="border-b border-slate-200/80 bg-white/80 backdrop-blur sticky top-0 z-50 py-3.5 px-6">
-    <div class="max-w-5xl mx-auto flex justify-between items-center">
-      <div>
-        <h1 class="text-lg font-semibold tracking-tight text-slate-900">ET Brief <span class="text-xs font-normal text-slate-400 ml-1.5">Multi-Edition</span></h1>
-        <p class="text-[11px] text-slate-500">Curated Business Intelligence for MBA Students</p>
+<body class="bg-[#F8F9FA] text-slate-800 min-h-screen">
+  <!-- Minimalist Header -->
+  <header class="border-b border-slate-200/70 bg-white/90 backdrop-blur-md sticky top-0 z-50 py-3.5 px-6">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white font-bold text-sm tracking-tight shadow-sm">
+          ET
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-slate-900 tracking-tight leading-tight">Executive Brief</h1>
+          <p class="text-[11px] text-slate-500 font-medium">Business School Intelligence Digest</p>
+        </div>
       </div>
       <div class="flex items-center gap-2">
-        <span class="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Ready
+        <span class="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> In-Browser Engine Active
         </span>
       </div>
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto p-6 space-y-6">
-    <!-- Upload Section -->
-    <section class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm text-center space-y-4">
+  <main class="max-w-6xl mx-auto p-6 md:p-8 space-y-8">
+    <!-- Clean Ingestion Box -->
+    <section class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)] text-center space-y-4 max-w-2xl mx-auto">
       <div>
-        <h2 class="text-base font-semibold text-slate-900">Batch Document Ingestion</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Upload 1 to 10 publication PDFs or text files. Non-business news is automatically purged.</p>
+        <h2 class="text-lg font-bold text-slate-900 tracking-tight">Batch Edition Ingestion</h2>
+        <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">Upload up to 10 newspaper PDFs. Headlines are stitched, masthead artifacts removed, and non-business items filtered out.</p>
       </div>
 
-      <div class="max-w-md mx-auto">
-        <input type="file" id="filePicker" multiple accept=".pdf,.txt,.docx" class="block w-full text-xs text-slate-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-dashed border-slate-300 rounded-xl p-2 bg-slate-50/50">
+      <div class="pt-2">
+        <label for="filePicker" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-2xl cursor-pointer transition shadow-sm active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Select Newspaper Editions (.pdf)
+        </label>
+        <input type="file" id="filePicker" multiple accept=".pdf,.txt" class="hidden">
       </div>
 
-      <div id="statusBox" class="hidden text-xs font-medium text-blue-600 bg-blue-50 py-2 px-4 rounded-xl max-w-md mx-auto"></div>
+      <div id="statusBox" class="hidden text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 py-2.5 px-4 rounded-2xl max-w-md mx-auto animate-pulse"></div>
     </section>
 
-    <!-- Filters & Results -->
-    <section id="resultsArea" class="hidden space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div class="flex flex-wrap gap-1.5" id="categoryTabs"></div>
-        <span id="summaryCounter" class="text-xs text-slate-400 font-medium"></span>
+    <!-- Results Section -->
+    <section id="resultsArea" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div class="flex flex-wrap gap-2" id="categoryTabs"></div>
+        <span id="summaryCounter" class="text-xs font-semibold text-slate-400"></span>
       </div>
 
-      <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
   </main>
 
@@ -62,19 +77,21 @@
     const categoryTabs = document.getElementById('categoryTabs');
     const summaryCounter = document.getElementById('summaryCounter');
 
+    // Strict Noise & Junk Filters
     const EXCLUDED = [
-      /\b(cricket|ipl|wicket|batsman|bcci|fifa|goal|messi|ronaldo|tennis|grand slam)\b/i,
-      /\b(bollywood|hollywood|box office|movie review|trailer|actor|actress|celebrity)\b/i,
-      /\b(murder|arrested|police custody|robbery|smuggling|bail plea)\b/i,
-      /\b(horoscope|astrology|zodiac|tarot|weather update|rainfall forecast)\b/i
+      /\b(cricket|ipl|wicket|batsman|bowler|fifa|goal|messi|ronaldo|tennis|grand slam)\b/i,
+      /\b(bollywood|box office|movie review|trailer|actor|actress|celebrity|horoscope|astrology|zodiac)\b/i,
+      /\b(murder|police custody|arrested|robbery|smuggling|bail plea|pellet guns|crossword|sudoku)\b/i,
+      /\b(matrimonial|alliance invited|divorcee|weather update|temperature dipped)\b/i,
+      /\b(advertorial|promotional feature|lifestyle promotional)\b/i
     ];
 
     const MBA_CATEGORIES = {
-      'Finance & Markets': [/\b(rbi|repo rate|inflation|nifty|sensex|ipo|sebi|dividend|yield|capex|pe ratio|ebitda|liquidity|valuation|debt)\b/i, 'WACC & Valuation'],
-      'Marketing & Strategy': [/\b(fmcg|brand campaign|ad spend|consumer behavior|cac|market share|e-commerce|d2c|retention|omnichannel)\b/i, 'CAC / LTV & Moat'],
-      'Operations & Supply Chain': [/\b(logistics|freight|supply chain|inventory|warehousing|procurement|port congestion|semiconductor)\b/i, 'Working Capital & JIT'],
-      'HR & Talent Strategy': [/\b(hiring|layoffs|attrition|headcount|esop|campus placement|appraisal|variable pay|talent retention)\b/i, 'Human Capital ROI'],
-      'Analytics & Tech': [/\b(genai|artificial intelligence|cloud infrastructure|saas|data center|cybersecurity|enterprise tech)\b/i, 'Digital Transformation']
+      'Finance & Capital Markets': [/\b(rbi|repo rate|inflation|nifty|sensex|ipo|sebi|dividend|yield|capex|pe ratio|ebitda|liquidity|valuation|debt|tier-1|at1 bonds)\b/i, 'WACC & Valuation Multiples'],
+      'Marketing & Consumer Strategy': [/\b(fmcg|brand campaign|ad spend|consumer behavior|cac|market share|e-commerce|d2c|retention|omnichannel|discounts)\b/i, 'CAC / LTV & Pricing Power'],
+      'Operations & Logistics': [/\b(logistics|freight|supply chain|inventory|warehousing|procurement|semiconductor|production|capacity|plant)\b/i, 'Capacity Utilization & JIT'],
+      'HR & Leadership': [/\b(hiring|layoffs|attrition|headcount|esop|campus placement|appraisal|variable pay|talent)\b/i, 'Human Capital & Productivity'],
+      'Analytics & DeepTech': [/\b(genai|artificial intelligence|cloud infrastructure|saas|data center|cybersecurity|enterprise tech|models|llm)\b/i, 'Digital Transformation & Moat']
     };
 
     let globalArticles = [];
@@ -83,32 +100,32 @@
     filePicker.addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
-      if (files.length > 10) return alert('Please select a maximum of 10 files.');
+      if (files.length > 10) return alert('Please upload a maximum of 10 editions at once.');
 
       statusBox.classList.remove('hidden');
       globalArticles = [];
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        statusBox.textContent = `Extracting publication ${i + 1} of ${files.length}: ${file.name}...`;
+        statusBox.textContent = `Cleaning and extracting edition ${i + 1} of ${files.length}:${file.name}...`;
 
         let rawText = '';
         if (file.name.endsWith('.pdf')) {
-          rawText = await readPDF(file);
+          rawText = await extractCleanPDFText(file);
         } else {
           rawText = await file.text();
         }
 
         if (rawText.trim()) {
-          const extracted = processText(rawText, file.name);
-          globalArticles.push(...extracted);
+          const parsed = processCleanArticles(rawText, file.name);
+          globalArticles.push(...parsed);
         }
       }
 
       statusBox.classList.add('hidden');
 
       if (!globalArticles.length) {
-        alert('No readable business articles found. Make sure the PDF contains digital text (not flat image scans).');
+        alert('No business articles could be compiled. Ensure the PDFs contain selectable text.');
         return;
       }
 
@@ -117,64 +134,103 @@
       resultsArea.classList.remove('hidden');
     });
 
-    async function readPDF(file) {
+    async function extractCleanPDFText(file) {
       try {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let text = '';
-        const pagesToRead = Math.min(pdf.numPages, 30);
+        const buffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+        let fullText = '';
+        const pagesToRead = Math.min(pdf.numPages, 28);
+
         for (let p = 1; p <= pagesToRead; p++) {
           const page = await pdf.getPage(p);
           const content = await page.getTextContent();
-          text += content.items.map(item => item.str).join(' ') + '\n\n';
+
+          // Join and repair broken line-end hyphens (e.g. "fas- ter" -> "faster")
+          let pageStr = content.items.map(item => item.str).join(' ');
+          pageStr = pageStr.replace(/(\w+)-\s+(\w+)/g, '$1$2'); // join hyphenated wraps
+          pageStr = pageStr.replace(/\s+/g, ' '); // collapse erratic spaces
+
+          fullText += pageStr + '\n\n';
         }
-        return text;
+        return fullText;
       } catch (err) {
-        console.error('PDF Read Error:', err);
+        console.error('PDF Read error:', err);
         return '';
       }
     }
 
-    function processText(text, source) {
-      const paragraphs = text.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 80);
-      const results = [];
+    function processCleanArticles(text, source) {
+      // Split into potential story chunks
+      const rawBlocks = text.split(/\n\s*\n|\.\s{2,}/);
+      const items = [];
 
-      for (const p of paragraphs) {
-        if (EXCLUDED.some(rx => rx.test(p))) continue;
+      for (let block of rawBlocks) {
+        block = block.trim();
+        if (block.length < 120) continue;
 
-        let category = 'General Strategy';
-        let framework = 'Competitive Advantage';
+        // Strip newspaper masthead artifacts
+        block = block.replace(/THE ECONOMIC TIMES\s*\|[^\n|]+(?=\||\b)/gi, '');
+        block = block.replace(/BENNETT, COLEMAN & CO\.?/gi, '');
+        block = block.replace(/\bVOL\.\s*\d+.*?(?=\s)/gi, '');
+        block = block.replace(/WWW\.\s*COM/gi, '');
+        block = block.replace(/[\x00-\x1F\x7F-\x9F]/g, ''); // strip weird non-printable chars
 
-        for (const [catName, [regex, tag]] of Object.entries(MBA_CATEGORIES)) {
-          if (regex.test(p)) {
+        // Apply strict non-business exclusion
+        if (EXCLUDED.some(pattern => pattern.test(block))) continue;
+
+        // Categorize into MBA tracks
+        let category = 'Macro & Corporate Strategy';
+        let framework = 'Competitive Strategy';
+
+        for (const [catName, [rx, fw]] of Object.entries(MBA_CATEGORIES)) {
+          if (rx.test(block)) {
             category = catName;
-            framework = tag;
+            framework = fw;
             break;
           }
         }
 
-        const sentences = p.match(/[^.!?]+[.!?]+/g) || [p];
-        const cleanSentences = sentences.map(s => s.trim()).filter(s => s.length > 15);
-        if (!cleanSentences.length) continue;
+        // Extract clean sentences
+        const sentences = block.match(/[^.!?]+[.!?]+/g) || [block];
+        const cleanSentences = sentences
+          .map(s => s.trim().replace(/^[^a-zA-Z0-9“"]+/, ''))
+          .filter(s => s.length > 25 && !s.toLowerCase().includes('economic times'));
 
-        const headline = cleanSentences[0];
-        const bullets = cleanSentences.slice(1, 4);
+        if (cleanSentences.length < 2) continue;
 
-        results.push({
-          headline: headline.length > 160 ? headline.slice(0, 160) + '...' : headline,
-          bullets: bullets.length ? bullets : [headline],
+        let headline = cleanSentences[0];
+        if (headline.length > 110) {
+          headline = headline.substring(0, 110).trim() + '...';
+        }
+
+        const bullets = cleanSentences.slice(1, 4).map(b => {
+          // Highlight key business numbers and currencies for readability
+          return b.replace(/(`\s*[\d,.]+\s*(?:crore|lakh|cr)?|\$\s*[\d,.]+\s*(?:billion|million)?|\b\d+%\b|\b\d+(?:\.\d+)?\s*(?:bps|basis points)\b)/gi, '<strong class="text-slate-900 font-semibold">$1</strong>');
+        });
+
+        items.push({
+          headline,
+          bullets,
           category,
           framework,
-          source
+          source: source.replace('.pdf', '')
         });
       }
-      return results;
+
+      // De-duplicate headlines that are almost identical
+      const seen = new Set();
+      return items.filter(it => {
+        const key = it.headline.slice(0, 30).toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
 
     function renderTabs() {
       const categories = ['All', ...new Set(globalArticles.map(a => a.category))];
       categoryTabs.innerHTML = categories.map(cat => `
-        <button onclick="setFilter('${cat}')" class="text-xs px-3 py-1.5 rounded-full font-medium transition ${activeFilter === cat ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+        <button onclick="setFilter('${cat}')" class="text-xs px-3.5 py-1.5 rounded-xl font-semibold transition ${activeFilter === cat ? 'bg-slate-900 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'}">
           ${cat}
         </button>
       `).join('');
@@ -188,25 +244,47 @@
 
     function renderCards() {
       const filtered = activeFilter === 'All' ? globalArticles : globalArticles.filter(a => a.category === activeFilter);
-      summaryCounter.textContent = `${filtered.length} briefs shown`;
+      summaryCounter.textContent = `${filtered.length} curated briefs`;
 
       cardsGrid.innerHTML = filtered.map(art => `
-        <div class="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-3">
-          <div class="flex justify-between items-start gap-2">
-            <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full">${art.category}</span>
-            <span class="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">${art.source}</span>
+        <article class="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition flex flex-col justify-between space-y-4">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+                ${art.category}
+              </span>
+              <span class="text-[10px] text-slate-400 font-medium truncate max-w-[120px]" title="${art.source}">
+                ${art.source}
+              </span>
+            </div>
+
+            <h3 class="text-sm font-bold text-slate-900 leading-snug tracking-tight">
+              ${art.headline}
+            </h3>
+
+            <ul class="text-xs text-slate-600 space-y-2 leading-relaxed">
+              ${art.bullets.map(b => `<li class="flex items-start gap-2"><span class="text-slate-400 font-bold">•</span><span>${b}</span></li>`).join('')}
+            </ul>
           </div>
-          <h4 class="text-sm font-semibold text-slate-900 leading-snug">${art.headline}</h4>
-          <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
-            ${art.bullets.map(b => `<li>${b}</li>`).join('')}
-          </ul>
-          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Framework: <strong class="text-slate-700">${art.framework}</strong></span>
-            <button onclick="navigator.clipboard.writeText('${art.headline.replace(/'/g, "\\'")}')" class="text-blue-600 hover:underline">Copy</button>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+            <span class="text-slate-500 font-medium">Framework: <strong class="text-slate-700 font-semibold">${art.framework}</strong></span>
+            <button onclick="copyBrief(this, '${encodeURIComponent(art.headline)}')" class="text-slate-500 hover:text-slate-900 font-medium">Copy</button>
           </div>
-        </div>
+        </article>
       `).join('');
     }
+
+    window.copyBrief = function(btn, encodedHeadline) {
+      navigator.clipboard.writeText(decodeURIComponent(encodedHeadline));
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('text-emerald-600');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('text-emerald-600');
+      }, 1500);
+    };
   </script>
 </body>
 </html>
