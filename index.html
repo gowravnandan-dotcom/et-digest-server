@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ET Brief — Multi-Edition MBA Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
+  </style>
+</head>
+<body class="bg-[#FBFBFD] text-slate-800 min-h-screen">
+  <!-- Top Navigation -->
+  <header class="border-b border-slate-200/80 bg-white/80 backdrop-blur sticky top-0 z-50 py-3.5 px-6">
+    <div class="max-w-5xl mx-auto flex justify-between items-center">
+      <div>
+        <h1 class="text-lg font-semibold tracking-tight text-slate-900">ET Brief <span class="text-xs font-normal text-slate-400 ml-1.5">Multi-Edition</span></h1>
+        <p class="text-[11px] text-slate-500">Curated Business Intelligence for MBA Students</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Ready
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto p-6 space-y-6">
+    <!-- Upload Section -->
+    <section class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm text-center space-y-4">
+      <div>
+        <h2 class="text-base font-semibold text-slate-900">Batch Document Ingestion</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Upload 1 to 10 publication PDFs or text files. Non-business news is automatically purged.</p>
+      </div>
+
+      <div class="max-w-md mx-auto">
+        <input type="file" id="filePicker" multiple accept=".pdf,.txt,.docx" class="block w-full text-xs text-slate-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-dashed border-slate-300 rounded-xl p-2 bg-slate-50/50">
+      </div>
+
+      <div id="statusBox" class="hidden text-xs font-medium text-blue-600 bg-blue-50 py-2 px-4 rounded-xl max-w-md mx-auto"></div>
+    </section>
+
+    <!-- Filters & Results -->
+    <section id="resultsArea" class="hidden space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div class="flex flex-wrap gap-1.5" id="categoryTabs"></div>
+        <span id="summaryCounter" class="text-xs text-slate-400 font-medium"></span>
+      </div>
+
+      <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+  </main>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const filePicker = document.getElementById('filePicker');
+    const statusBox = document.getElementById('statusBox');
+    const resultsArea = document.getElementById('resultsArea');
+    const cardsGrid = document.getElementById('cardsGrid');
+    const categoryTabs = document.getElementById('categoryTabs');
+    const summaryCounter = document.getElementById('summaryCounter');
+
+    const EXCLUDED = [
+      /\b(cricket|ipl|wicket|batsman|bcci|fifa|goal|messi|ronaldo|tennis|grand slam)\b/i,
+      /\b(bollywood|hollywood|box office|movie review|trailer|actor|actress|celebrity)\b/i,
+      /\b(murder|arrested|police custody|robbery|smuggling|bail plea)\b/i,
+      /\b(horoscope|astrology|zodiac|tarot|weather update|rainfall forecast)\b/i
+    ];
+
+    const MBA_CATEGORIES = {
+      'Finance & Markets': [/\b(rbi|repo rate|inflation|nifty|sensex|ipo|sebi|dividend|yield|capex|pe ratio|ebitda|liquidity|valuation|debt)\b/i, 'WACC & Valuation'],
+      'Marketing & Strategy': [/\b(fmcg|brand campaign|ad spend|consumer behavior|cac|market share|e-commerce|d2c|retention|omnichannel)\b/i, 'CAC / LTV & Moat'],
+      'Operations & Supply Chain': [/\b(logistics|freight|supply chain|inventory|warehousing|procurement|port congestion|semiconductor)\b/i, 'Working Capital & JIT'],
+      'HR & Talent Strategy': [/\b(hiring|layoffs|attrition|headcount|esop|campus placement|appraisal|variable pay|talent retention)\b/i, 'Human Capital ROI'],
+      'Analytics & Tech': [/\b(genai|artificial intelligence|cloud infrastructure|saas|data center|cybersecurity|enterprise tech)\b/i, 'Digital Transformation']
+    };
+
+    let globalArticles = [];
+    let activeFilter = 'All';
+
+    filePicker.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+      if (files.length > 10) return alert('Please select a maximum of 10 files.');
+
+      statusBox.classList.remove('hidden');
+      globalArticles = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        statusBox.textContent = `Extracting publication ${i + 1} of ${files.length}: ${file.name}...`;
+
+        let rawText = '';
+        if (file.name.endsWith('.pdf')) {
+          rawText = await readPDF(file);
+        } else {
+          rawText = await file.text();
+        }
+
+        if (rawText.trim()) {
+          const extracted = processText(rawText, file.name);
+          globalArticles.push(...extracted);
+        }
+      }
+
+      statusBox.classList.add('hidden');
+
+      if (!globalArticles.length) {
+        alert('No readable business articles found. Make sure the PDF contains digital text (not flat image scans).');
+        return;
+      }
+
+      renderTabs();
+      renderCards();
+      resultsArea.classList.remove('hidden');
+    });
+
+    async function readPDF(file) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let text = '';
+        const pagesToRead = Math.min(pdf.numPages, 30);
+        for (let p = 1; p <= pagesToRead; p++) {
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          text += content.items.map(item => item.str).join(' ') + '\n\n';
+        }
+        return text;
+      } catch (err) {
+        console.error('PDF Read Error:', err);
+        return '';
+      }
+    }
+
+    function processText(text, source) {
+      const paragraphs = text.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 80);
+      const results = [];
+
+      for (const p of paragraphs) {
+        if (EXCLUDED.some(rx => rx.test(p))) continue;
+
+        let category = 'General Strategy';
+        let framework = 'Competitive Advantage';
+
+        for (const [catName, [regex, tag]] of Object.entries(MBA_CATEGORIES)) {
+          if (regex.test(p)) {
+            category = catName;
+            framework = tag;
+            break;
+          }
+        }
+
+        const sentences = p.match(/[^.!?]+[.!?]+/g) || [p];
+        const cleanSentences = sentences.map(s => s.trim()).filter(s => s.length > 15);
+        if (!cleanSentences.length) continue;
+
+        const headline = cleanSentences[0];
+        const bullets = cleanSentences.slice(1, 4);
+
+        results.push({
+          headline: headline.length > 160 ? headline.slice(0, 160) + '...' : headline,
+          bullets: bullets.length ? bullets : [headline],
+          category,
+          framework,
+          source
+        });
+      }
+      return results;
+    }
+
+    function renderTabs() {
+      const categories = ['All', ...new Set(globalArticles.map(a => a.category))];
+      categoryTabs.innerHTML = categories.map(cat => `
+        <button onclick="setFilter('${cat}')" class="text-xs px-3 py-1.5 rounded-full font-medium transition ${activeFilter === cat ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+          ${cat}
+        </button>
+      `).join('');
+    }
+
+    window.setFilter = function(filter) {
+      activeFilter = filter;
+      renderTabs();
+      renderCards();
+    };
+
+    function renderCards() {
+      const filtered = activeFilter === 'All' ? globalArticles : globalArticles.filter(a => a.category === activeFilter);
+      summaryCounter.textContent = `${filtered.length} briefs shown`;
+
+      cardsGrid.innerHTML = filtered.map(art => `
+        <div class="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-3">
+          <div class="flex justify-between items-start gap-2">
+            <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full">${art.category}</span>
+            <span class="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">${art.source}</span>
+          </div>
+          <h4 class="text-sm font-semibold text-slate-900 leading-snug">${art.headline}</h4>
+          <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+            ${art.bullets.map(b => `<li>${b}</li>`).join('')}
+          </ul>
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Framework: <strong class="text-slate-700">${art.framework}</strong></span>
+            <button onclick="navigator.clipboard.writeText('${art.headline.replace(/'/g, "\\'")}')" class="text-blue-600 hover:underline">Copy</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
